@@ -3,121 +3,146 @@
 <head>
   <title>Product Entry Form</title>
   <style>
-    body { font-family: Arial; max-width: 500px; margin: auto; }
-    input, textarea, select { width: 100%; margin: 8px 0; padding: 8px; text-transform: uppercase; }
-    .itemRow { display: flex; gap: 10px; margin-bottom: 8px; }
-    .itemRow input { flex: 1; }
-    .itemRow .percentage { width: 70px; background: #eee; border: 1px solid #ccc; padding: 8px; text-align: right; }
-    button { padding: 10px 15px; }
+    body { font-family: Arial; max-width: 600px; margin: auto; }
+    input, select, button { width: 100%; padding: 8px; margin: 6px 0; }
+    .item-row { display: flex; gap: 10px; }
+    .item-row input { flex: 1; }
   </style>
 </head>
 <body>
-
   <h2>Product Entry Form</h2>
-  <form id="productForm">
-    <select name="polymer" id="polymerSelect" required>
-      <option value="">-- Select Polymer --</option>
+  <form id="entryForm">
+    <label for="polymer">Polymer:</label>
+    <select id="polymer" name="polymer" required>
+      <option value="">Select Polymer</option>
+      <option>PE</option><option>PVC</option><option>EVA</option><option>ABS</option>
+      <option>SAN</option><option>GPPS</option><option>NYLON</option><option>PET</option>
+      <option>PC</option><option>PTFE</option><option>R-PE</option><option>R-LD</option>
+      <option>R-LLD</option><option>R-PPCP</option><option>R-PVC</option><option>R-EVA</option>
+      <option>R-ABS</option><option>R-SAN</option><option>R-GGPS</option><option>R-PET</option>
+      <option>R-NYLON</option>
     </select>
 
-    <input name="product" placeholder="Product Name" required>
+    <label for="product">Product Name:</label>
+    <input type="text" id="product" name="product" required>
 
-    <div id="items">
-      <div class="itemRow">
-        <input name="item" placeholder="Item" required>
-        <input name="weight" type="number" step="0.001" placeholder="Weight" required>
-        <div class="percentage">0%</div>
+    <label for="color">Color:</label>
+    <input type="text" id="color" name="color" required>
+
+    <div id="itemsContainer">
+      <div class="item-row">
+        <input type="text" name="item" placeholder="Item Name" required>
+        <input type="number" name="weight" placeholder="Weight (g)" step="0.001" required>
       </div>
     </div>
 
-    <button type="button" id="addItemBtn">+ Add More Items</button><br><br>
+    <button type="button" onclick="addItem()">Add More Item</button>
 
-    <input name="pantone" placeholder="Pantone">
-    <input name="ral" placeholder="RAL">
-    <input name="application" placeholder="Application">
-    <textarea name="additional" placeholder="Additional Information"></textarea>
+    <label for="pantone">Pantone Code:</label>
+    <input type="text" id="pantone" name="pantone">
+
+    <label for="ral">RAL Code:</label>
+    <input type="text" id="ral" name="ral">
+
+    <label for="application">Application:</label>
+    <input type="text" id="application" name="application">
+
+    <label for="additional">Additional Notes:</label>
+    <input type="text" id="additional" name="additional">
 
     <button type="submit">Submit</button>
   </form>
 
   <script>
-    const polymers = [
-      "PE", "PVC", "EVA", "ABS", "SAN", "GPPS", "NYLON", "PET", "PC", "PTFE",
-      "R-PE", "R-LD", "R-LLD", "R-PPCP", "R-PVC", "R-EVA", "R-ABS", "R-SAN", "R-GGPS", "R-PET", "R-NYLON"
-    ];
+    function addItem() {
+      const container = document.getElementById("itemsContainer");
+      const row = document.createElement("div");
+      row.className = "item-row";
+      row.innerHTML = `
+        <input type="text" name="item" placeholder="Item Name" required>
+        <input type="number" name="weight" placeholder="Weight (g)" step="0.001" required>
+      `;
+      container.appendChild(row);
+    }
 
-    // Populate searchable dropdown
-    document.addEventListener("DOMContentLoaded", () => {
-      const polymerSelect = document.getElementById('polymerSelect');
-      polymers.forEach(polymer => {
-        const option = document.createElement('option');
-        option.value = polymer;
-        option.textContent = polymer;
-        polymerSelect.appendChild(option);
+    function toUpperCaseFields(form) {
+      const fields = form.querySelectorAll("input[type='text'], input[type='number'], select");
+      fields.forEach(field => {
+        if (field.value) field.value = field.value.toString().toUpperCase();
+      });
+    }
+
+    document.getElementById("entryForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      const form = e.target;
+      toUpperCaseFields(form);
+
+      const polymer = form.polymer.value;
+      const product = form.product.value;
+      const color = form.color.value;
+      const pantone = form.pantone.value;
+      const ral = form.ral.value;
+      const application = form.application.value;
+      const additional = form.additional.value;
+
+      const itemInputs = form.querySelectorAll("input[name='item']");
+      const weightInputs = form.querySelectorAll("input[name='weight']");
+
+      const items = [];
+      const weights = [];
+      let totalWeight = 0;
+
+      itemInputs.forEach((itemInput, i) => {
+        const item = itemInput.value;
+        const weight = parseFloat(weightInputs[i].value || 0);
+        if (item && !isNaN(weight)) {
+          items.push(item);
+          weights.push(weight);
+          totalWeight += weight;
+        }
       });
 
-      // Enable search using datalist
-      polymerSelect.addEventListener('change', () => polymerSelect.blur());
+      const colorCodeMap = {
+        "NATURAL": "00", "BLACK": "10", "WHITE": "20", "RED": "30",
+        "GREEN": "40", "YELLOW": "50", "BLUE": "60", "ORANGE": "70"
+      };
 
-      // Add item row
-      document.getElementById("addItemBtn").addEventListener("click", function () {
-        const div = document.createElement('div');
-        div.className = 'itemRow';
-        div.innerHTML = `
-          <input name="item" placeholder="Item" required>
-          <input name="weight" type="number" step="0.001" placeholder="Weight" required>
-          <div class="percentage">0%</div>
-        `;
-        document.getElementById('items').appendChild(div);
-      });
+      const prefixMap = {
+        "PE": "1605C", "PVC": "1603C", "ABS": "0119E", "SAN": "1914E", "GPPS": "0719E",
+        "PET": "1620E", "EVA": "0501C", "NYLON": "1414E", "ADDITIVE": "0105AD",
+        "PTFE": "1606E", "PC": "1603E"
+      };
 
-      // Weight input listener for percentage calculation
-      document.getElementById("productForm").addEventListener("input", () => {
-        const weights = Array.from(document.getElementsByName('weight')).map(w => parseFloat(w.value) || 0);
-        const total = weights.reduce((a, b) => a + b, 0);
-        const percents = document.querySelectorAll(".percentage");
+      const cleanPoly = polymer.replace("R-", "");
+      const prefix = prefixMap[cleanPoly] || "XXXX";
+      const isRecycled = polymer.startsWith("R-");
 
-        weights.forEach((w, i) => {
-          percents[i].textContent = total > 0 ? ((w / total) * 100).toFixed(1) + "%" : "0%";
+      const colorKey = color.toUpperCase();
+      const colorCode = colorCodeMap[colorKey] || "99";
+
+      // Call server to get serial number and generate finalCode
+      const serialGenURL = "https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec"; // Replace with your deployed Apps Script URL
+
+      fetch(serialGenURL + `?prefix=${prefix}&color=${colorCode}&recycled=${isRecycled}`)
+        .then(res => res.json())
+        .then(data => {
+          const serial = data.serial.padStart(3, "0");
+          const finalCode = `${prefix}${isRecycled ? "R" : ""}${colorCode}${serial}`;
+
+          const payload = {
+            polymer, product, color, finalCode, items: JSON.stringify(items),
+            weights: JSON.stringify(weights), totalWeight, pantone, ral, application, additional
+          };
+
+          fetch("https://script.google.com/macros/s/AKfycby0CgwuKR9e7oW8hyG26NY70oVD2mjfETvsm2_1TN7Y_zku3qOarBxZlJpFbNsGVVw/exec", {
+            method: "POST",
+            body: new URLSearchParams(payload)
+          })
+            .then(r => r.text())
+            .then(alert)
+            .catch(err => alert("Error: " + err));
         });
-      });
-
-      // Form submission
-      document.getElementById('productForm').addEventListener('submit', function (e) {
-        e.preventDefault();
-
-        const form = e.target;
-        const formData = new FormData(form);
-
-        const toUpper = str => (str || "").toUpperCase();
-
-        const polymer = toUpper(formData.get('polymer'));
-        const product = toUpper(formData.get('product'));
-        const pantone = toUpper(formData.get('pantone'));
-        const ral = toUpper(formData.get('ral'));
-        const application = toUpper(formData.get('application'));
-        const additional = toUpper(formData.get('additional'));
-
-        const items = Array.from(document.getElementsByName('item')).map(input => input.value.toUpperCase());
-        const weights = Array.from(document.getElementsByName('weight')).map(input => parseFloat(input.value) || 0);
-
-        const data = new FormData();
-        data.append('polymer', polymer);
-        data.append('product', product);
-        data.append('items', JSON.stringify(items));
-        data.append('weights', JSON.stringify(weights));
-        data.append('pantone', pantone);
-        data.append('ral', ral);
-        data.append('application', application);
-        data.append('additional', additional);
-
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbxQlJS3q-geMyW5Ldh7Fwo9BXD21_2BGuCZlE0Y5yd51bf0kfdMUPYSS0s90SRFEEJD/exec';
-
-        fetch(scriptURL, { method: 'POST', body: data })
-          .then(response => alert("Submitted Successfully!"))
-          .catch(error => alert("Error: " + error.message));
-      });
     });
   </script>
-
 </body>
 </html>
